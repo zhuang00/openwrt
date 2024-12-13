@@ -5,6 +5,12 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 ---
 --- a/db.txt
 +++ b/db.txt
-@@ -996,3 +996,3 @@ country JP: DFS-JP
-	(2402 - 2482 @ 40), (20)
-	(2474 - 2494 @ 20), (20)
+@@ -19,7 +19,7 @@ country 00:
+ 	# Channel 14. Only JP enables this and for 802.11b only
+ 	(2474 - 2494 @ 20), (20)
+ 	# Channel 36 - 48
+-	(5170 - 5250 @ 80), (20), NO-IR, AUTO-BW
++	(5170 - 5250 @ 80), (20), AUTO-BW
+ 	# Channel 52 - 64
+ 	(5250 - 5330 @ 80), (20), NO-IR, DFS, AUTO-BW
+ 	# Channel 100 - 144
