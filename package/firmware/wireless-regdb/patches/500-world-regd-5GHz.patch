@@ -5,11 +5,6 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 ---
 --- a/db.txt
 +++ b/db.txt
-@@ -944,6 +944,7 @@ country JO: DFS-JP
- # Source:
- # https://www.soumu.go.jp/main_content/000635492.pdf
- # https://www.soumu.go.jp/main_content/000833682.pdf
-+# https://www.soumu.go.jp/main_content/000919158.pdf
- country JP: DFS-JP
- 	(2402 - 2482 @ 40), (20)
- 	(2474 - 2494 @ 20), (20)
+@@ -996,3 +996,3 @@ country JP: DFS-JP
+	(2402 - 2482 @ 40), (20)
+	(2474 - 2494 @ 20), (20), NO-OFDM
