@@ -20,6 +20,14 @@ define Package/wireless-regdb
   TITLE:=Wireless Regulatory Database
 endef
 
+define Build/Prepare
+	# 解压源代码并准备补丁
+	$(call Build/Prepare/Default)
+	# 应用补丁
+	$(CP) $(PKG_BUILD_DIR)/db.txt $(PKG_BUILD_DIR)/db.txt.orig
+	patch -p1 < $(PKG_BUILD_DIR)/patches/500-world-regd-5GHz.patch || exit 1
+endef
+
 define Build/Compile
 	$(STAGING_DIR_HOST)/bin/$(PYTHON) $(PKG_BUILD_DIR)/db2fw.py $(PKG_BUILD_DIR)/regulatory.db $(PKG_BUILD_DIR)/db.txt
 endef
