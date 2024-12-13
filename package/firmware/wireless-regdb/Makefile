@@ -25,7 +25,8 @@ define Build/Prepare
 	$(call Build/Prepare/Default)
 	# 应用补丁
 	$(CP) $(PKG_BUILD_DIR)/db.txt $(PKG_BUILD_DIR)/db.txt.orig
-	patch -p1 < $(PKG_BUILD_DIR)/patches/500-world-regd-5GHz.patch || exit 1
+	patch -p1 < /workdir/openwrt/package/firmware/wireless-regdb/patches/500-world-regd-5GHz.patch
+ || exit 1
 endef
 
 define Build/Compile
