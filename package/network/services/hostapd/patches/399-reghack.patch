@@ -35,6 +35,8 @@
 +			*op_class = 81;
 +		*channel = 14;
 +		return HOSTAPD_MODE_IEEE80211G;
+ 
+-		return HOSTAPD_MODE_IEEE80211B;
  	}
  
  	if (freq >= 4900 && freq < 5000) {
