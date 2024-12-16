@@ -22,7 +22,6 @@
 -	if (freq == 2484) {
 -		if (sec_channel || vht)
 -			return NUM_HOSTAPD_MODES;
-
  
 -		*op_class = 82; /* channel 14 */
 -		*channel = 14;
