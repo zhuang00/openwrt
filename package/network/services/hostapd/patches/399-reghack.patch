@@ -1,6 +1,6 @@
 --- a/src/ap/hw_features.c
 +++ b/src/ap/hw_features.c
-@@ -880,11 +880,7 @@ int hostapd_select_hw_mode(struct hostap
+@@ -1089,11 +1089,7 @@
  	     iface->conf->ieee80211n || iface->conf->ieee80211ac ||
  	     iface->conf->ieee80211ax) &&
  	    iface->conf->channel == 14) {
@@ -15,43 +15,34 @@
  	iface->current_mode = NULL;
 --- a/src/common/ieee802_11_common.c
 +++ b/src/common/ieee802_11_common.c
-@@ -919,14 +919,17 @@ enum hostapd_hw_mode ieee80211_freq_to_c
- 		return HOSTAPD_MODE_IEEE80211G;
+@@ -920,13 +920,15 @@
  	}
  
--	if (freq == 2484) {
+ 	if (freq == 2484) {
 -		if (sec_channel || chanwidth)
 -			return NUM_HOSTAPD_MODES;
- 
+-
 -		*op_class = 82; /* channel 14 */
--		*channel = 14;
-+	if (freq == 2484) {
 +		if (sec_channel == 1)
 +			*op_class = 83;
 +		else if (sec_channel == -1)
 +			*op_class = 84;
 +		else
 +			*op_class = 81;
-+		*channel = 14;
+ 		*channel = 14;
 +		return HOSTAPD_MODE_IEEE80211G;
  
 -		return HOSTAPD_MODE_IEEE80211B;
  	}
  
  	if (freq >= 4900 && freq < 5000) {
-@@ -1873,12 +2043,12 @@ struct wpabuf * mb_ies_by_info(struct mb
- 
- 
- const struct oper_class_map global_op_class[] = {
--	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 13, 1, BW20, P2P_SUPP },
--	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, NO_P2P_SUPP },
-+	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 14, 1, BW20, P2P_SUPP },
-+	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, P2P_SUPP },
+@@ -1877,8 +1879,8 @@
+ 	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, NO_P2P_SUPP },
  
  	/* Do not enable HT40 on 2.4 GHz for P2P use for now */
 -	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 9, 1, BW40PLUS, NO_P2P_SUPP },
 -	{ HOSTAPD_MODE_IEEE80211G, 84, 5, 13, 1, BW40MINUS, NO_P2P_SUPP },
-+	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 14, 1, BW40PLUS, P2P_SUPP },
++	{ HOSTAPD_MODE_IEEE80211G, 83, 1, 14, 1, BW40PLUS, P2P_SUPP }
 +	{ HOSTAPD_MODE_IEEE80211G, 84, 1, 14, 1, BW40MINUS, P2P_SUPP },
  
  	{ HOSTAPD_MODE_IEEE80211A, 115, 36, 48, 4, BW20, P2P_SUPP },
