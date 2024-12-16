@@ -15,7 +15,7 @@
  	iface->current_mode = NULL;
 --- a/src/common/ieee802_11_common.c
 +++ b/src/common/ieee802_11_common.c
-@@ -752,14 +752,499 @@ enum hostapd_hw_mode ieee80211_freq_to_c
+@@ -752,14 +752,16 @@ enum hostapd_hw_mode ieee80211_freq_to_c
  		return HOSTAPD_MODE_IEEE80211G;
  	}
  
