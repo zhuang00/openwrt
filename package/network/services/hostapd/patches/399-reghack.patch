@@ -39,7 +39,7 @@
  	}
  
  	if (freq >= 4900 && freq < 5000) {
-@@ -1558,12 +2043,12 @@ struct wpabuf * mb_ies_by_info(struct mb
+@@ -1873,12 +2043,12 @@ struct wpabuf * mb_ies_by_info(struct mb
  
  
  const struct oper_class_map global_op_class[] = {
