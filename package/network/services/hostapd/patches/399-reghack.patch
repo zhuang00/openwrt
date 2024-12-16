@@ -15,12 +15,12 @@
  	iface->current_mode = NULL;
 --- a/src/common/ieee802_11_common.c
 +++ b/src/common/ieee802_11_common.c
-@@ -752,14 +752,17 @@ enum hostapd_hw_mode ieee80211_freq_to_c
+@@ -919,14 +919,17 @@ enum hostapd_hw_mode ieee80211_freq_to_c
  		return HOSTAPD_MODE_IEEE80211G;
  	}
  
 -	if (freq == 2484) {
--		if (sec_channel || vht)
+-		if (sec_channel || chanwidth)
 -			return NUM_HOSTAPD_MODES;
  
 -		*op_class = 82; /* channel 14 */
