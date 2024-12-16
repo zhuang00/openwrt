@@ -36,10 +36,10 @@
  	}
  
  	if (freq >= 4900 && freq < 5000) {
-@@ -1877,8 +1879,8 @@
- 	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, NO_P2P_SUPP },
+@@ -1873,12 +1875,12 @@
  
- 	/* Do not enable HT40 on 2.4 GHz for P2P use for now */
+ 
+ const struct oper_class_map global_op_class[] = {
 -	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 13, 1, BW20, P2P_SUPP },
 -	{ HOSTAPD_MODE_IEEE80211G, 82, 14, 14, 1, BW20, NO_P2P_SUPP },
 +	{ HOSTAPD_MODE_IEEE80211G, 81, 1, 14, 1, BW20, P2P_SUPP },
@@ -53,3 +53,4 @@
  
  	{ HOSTAPD_MODE_IEEE80211A, 115, 36, 48, 4, BW20, P2P_SUPP },
  	{ HOSTAPD_MODE_IEEE80211A, 116, 36, 44, 8, BW40PLUS, P2P_SUPP },
+
