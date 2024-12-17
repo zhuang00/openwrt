@@ -95,7 +95,6 @@
 +		}
  		return true;
  	}
- 
 --- a/net/mac80211/iface.c
 +++ b/net/mac80211/iface.c
 @@ -60,6 +60,9 @@
