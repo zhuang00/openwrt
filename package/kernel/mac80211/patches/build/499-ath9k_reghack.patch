@@ -66,10 +66,9 @@
 -		print_regdomain_info(rd);
 -		return -EINVAL;
 -	}
- 
+- 
  	regd = reg_copy_regd(rd);
- 	if (IS_ERR(regd))
-  
+ 	if (IS_ERR(regd))  
 --- a/net/wireless/util.c
 +++ b/net/wireless/util.c
 @@ -80,6 +80,7 @@
