@@ -1,6 +1,6 @@
 --- a/db.txt
 +++ b/db.txt
-@@ -10,24 +10,11 @@
+@@ -10,24 +10,10 @@
  
  # This is the world regulatory domain
  country 00:
@@ -26,11 +26,10 @@
 +	(4890 - 6110 @ 160), (30)
 +	# IEEE 802.11ad (60GHz), channels 1..6
 +	(57000 - 71000 @ 2160), (44)
-+ 
  
  # AD as part of CEPT accepted decisions 2005/513/EC (5GHz RLAN, EN 301 893)
  # and 2006/771/EC (amended by 2008/432/EC, Short-Range Devices, EN 300 440)
-@@ -420,16 +407,11 @@
+@@ -421,16 +407,11 @@
  # https://wap.miit.gov.cn/cms_files/filemanager/1226211233/attach/20219/d125301b13454551b698ff5afa49ca28.pdf
  # https://www.miit.gov.cn/cms_files/filemanager/1226211233/attach/20236/d1dc19424d5a4cfe90d631adeee8dd58.pdf
  # Note: The transmit power for 5250-5350MHz bands can be raised by 3dBm when TPC is implemented
@@ -52,7 +51,7 @@
  
  # Source:
  # https://www.ane.gov.co/Sliders/archivos/gesti%C3%B3n%20t%C3%A9cnica/Estudios%20de%20gesti%C3%B3n%20y%20planeaci%C3%B3n/Banda%206%20GHz/Documentos%20decisi%C3%B3n/Resolucion%20000737%20del%2018112022.pdf
-@@ -993,17 +975,11 @@
+@@ -994,17 +975,11 @@
  # https://www.soumu.go.jp/main_content/000635492.pdf
  # https://www.soumu.go.jp/main_content/000833682.pdf
  # https://www.soumu.go.jp/main_content/000919158.pdf
@@ -75,7 +74,7 @@
  
  # Source:
  # https://www.ca.go.ke/sites/default/files/2023-06/Guidelines-on-the-Use-of-Radiofrequency-Spectrum-by-Short-Range-Devices-2022.pdf
-@@ -1907,33 +1883,11 @@
+@@ -1920,33 +1895,11 @@
  # power in order to avoid any potential interference in the adjacent restricted
  # frequency band, 2,483.5–2,500 MHz which is subject to strict emission limits
  # set out in 47 CFR § 15.205. TODO: reenable and specify a safe TX power here.
