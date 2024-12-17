@@ -1,9 +1,10 @@
 --- a/net/wireless/reg.c
 +++ b/net/wireless/reg.c
-@ -224,15 +224,8 @@
+@@ -242,16 +242,8 @@
+ 	.n_reg_rules = 8,
  	.alpha2 =  "00",
  	.reg_rules = {
- 		/* IEEE 802.11b/g, channels 1..11 */
+-		/* IEEE 802.11b/g, channels 1..11 */
 -		REG_RULE(2412-10, 2462+10, 40, 6, 20, 0),
 -		/* IEEE 802.11b/g, channels 12..13. */
 -		REG_RULE(2467-10, 2472+10, 20, 6, 20,
@@ -18,11 +19,10 @@
  		/* IEEE 802.11a, channel 36..48 */
  		REG_RULE(5180-10, 5240+10, 80, 6, 20,
                          NL80211_RRF_NO_IR |
-@@ -3732,13 +3725,6 @@
- 
+@@ -3783,13 +3775,8 @@
  	if (!regdom_changes(rd->alpha2))
  		return -EALREADY;
--
+ 
 -	if (!is_valid_rd(rd)) {
 -		pr_err("Invalid regulatory domain detected: %c%c\n",
 -		       rd->alpha2[0], rd->alpha2[1]);
@@ -30,9 +30,11 @@
 -		return -EINVAL;
 -	}
  
++
  	if (!user_request->intersect) {
  		reset_regdomains(false, rd);
-@@ -3770,12 +3756,6 @@
+ 		return 0;
+@@ -3820,12 +3807,6 @@
  	if (!regdom_changes(rd->alpha2))
  		return -EALREADY;
  
@@ -45,7 +47,7 @@
  
  	request_wiphy = wiphy_idx_to_wiphy(driver_request->wiphy_idx);
  	if (!request_wiphy)
-@@ -3829,12 +3809,6 @@
+@@ -3886,12 +3867,7 @@
  	 * and the pending request came in from a country IE
  	 */
  
@@ -55,9 +57,26 @@
 -		print_regdomain_info(rd);
 -		return -EINVAL;
 -	}
++	
  
  	request_wiphy = wiphy_idx_to_wiphy(country_ie_request->wiphy_idx);
  	if (!request_wiphy)
+@@ -3995,13 +3971,7 @@
+ 		 "wiphy should have REGULATORY_WIPHY_SELF_MANAGED\n"))
+ 		return -EPERM;
+ 
+-	if (WARN(!is_valid_rd(rd),
+-		 "Invalid regulatory domain detected: %c%c\n",
+-		 rd->alpha2[0], rd->alpha2[1])) {
+-		print_regdomain_info(rd);
+-		return -EINVAL;
+-	}
+-
++	
+ 	regd = reg_copy_regd(rd);
+ 	if (IS_ERR(regd))
+ 		return PTR_ERR(regd);
+
 --- a/net/wireless/util.c
 +++ b/net/wireless/util.c
 @@ -80,6 +80,7 @@
