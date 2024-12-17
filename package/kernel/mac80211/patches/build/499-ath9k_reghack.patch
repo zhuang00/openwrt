@@ -67,9 +67,9 @@
 -		return -EINVAL;
 -	}
 - 
-  regd = reg_copy_regd(rd);
-  if (IS_ERR(regd))
-    return PTR_ERR(regd);
+	regd = reg_copy_regd(rd);
+	if (IS_ERR(regd))
+		return PTR_ERR(regd);
 --- a/net/wireless/util.c
 +++ b/net/wireless/util.c
 @@ -80,6 +80,7 @@
