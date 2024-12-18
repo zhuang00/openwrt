@@ -107,14 +107,3 @@
 +			}
  		return true;
  	}
---- a/net/mac80211/iface.c
-+++ b/net/mac80211/iface.c
-@@ -59,7 +59,9 @@
- 
- 	power = ieee80211_chandef_max_power(&chanctx_conf->def);
- 	rcu_read_unlock();
-+	printk(KERN_DEBUG "ieee80211_recalc_txpower chandef_max_power=%d user_power_level=%d ap_pwoer_level=%d vif.vss_conf.txpower=%d", power, sdata->user_power_level, sdata->ap_power_level, sdata->vif.bss_conf.txpower);
- 
-+	power = sdata->user_power_level;
- 	if (sdata->user_power_level != IEEE80211_UNSET_POWER_LEVEL)
- 		power = min(power, sdata->user_power_level); 
