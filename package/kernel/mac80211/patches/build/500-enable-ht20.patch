@@ -1,0 +1,13 @@
+--- a/net/wireless/chan.c
++++ b/net/wireless/chan.c
+@@ -291,10 +291,6 @@
+ 		return false;
+ 	}
+ 
+-	/* channel 14 is only for IEEE 802.11b */
+-	if (chandef->center_freq1 == 2484 &&
+-	    chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
+-		return false;
+ 
+ 	if (cfg80211_chandef_is_edmg(chandef) &&
+ 	    !cfg80211_edmg_chandef_valid(chandef))
