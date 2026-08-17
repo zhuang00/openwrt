@@ -52,6 +52,25 @@ define Build/mt7622-gpt
 	rm $@.tmp
 endef
 
+define Device/asiarf_ap7622-wh1
+  DEVICE_VENDOR := AsiaRF
+  DEVICE_MODEL := AP7622-WH1
+  DEVICE_DTS := mt7622-asiarf-ap7622-wh1
+  DEVICE_DTS_DIR := ../dts
+  DEVICE_PACKAGES := kmod-ata-ahci-mtk kmod-btmtkuart kmod-usb3
+  BOARD_NAME := asiarf,ap7622-wh1
+  UBINIZE_OPTS := -E 5
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  KERNEL_SIZE := 8192k
+  IMAGE_SIZE := 32768k
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | \
+          append-ubi | check-size
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+endef
+TARGET_DEVICES += asiarf_ap7622-wh1
+
 define Device/smartrg_sdg-841-t6
   DEVICE_VENDOR := Adtran
   DEVICE_DTS_DIR := ../dts
@@ -123,7 +142,7 @@ define Device/buffalo_wsr
 	buffalo-enc $$(DEVICE_MODEL) $$(BUFFALO_TAG_VERSION) -l | \
 	buffalo-tag-dhp $$(DEVICE_MODEL) JP JP | buffalo-enc-tag -l | buffalo-dhp-image
   IMAGE/factory-uboot.bin := append-ubi | \
-	buffalo-trx $$$$(BUFFALO_TRX_MAGIC) $$$$@ $(KDIR)/ubi_mark
+	buffalo-trx $$$$(BUFFALO_TRX_MAGIC) $$$$@ $(KDIR)/ubi_mark | append-metadata
   IMAGE/sysupgrade.bin := \
 	buffalo-trx $$$$(BUFFALO_TRX_MAGIC) $(KDIR)/tmp/$$(DEVICE_NAME).null | \
 	sysupgrade-tar kernel=$$$$@ | append-metadata
@@ -143,6 +162,16 @@ define Device/buffalo_wsr-2533dhp2
 	(Warning: your configurations will be erased!)
 endef
 TARGET_DEVICES += buffalo_wsr-2533dhp2
+
+define Device/buffalo_wsr-2533dhp3
+  $(Device/buffalo_wsr)
+  DEVICE_MODEL := WSR-2533DHP3
+  DEVICE_DTS := mt7622-buffalo-wsr-2533dhp3
+  IMAGE_SIZE := 51200k
+  BUFFALO_TRX_MAGIC := 0x33504844
+  DEVICE_PACKAGES := kmod-mt7615-firmware
+endef
+TARGET_DEVICES += buffalo_wsr-2533dhp3
 
 define Device/buffalo_wsr-3200ax4s
   $(Device/buffalo_wsr)
@@ -194,10 +223,19 @@ define Device/elecom_wrc-2533gent
 endef
 TARGET_DEVICES += elecom_wrc-2533gent
 
-define Device/elecom_wrc-x3200gst3
+define Device/elecom_wrc-g01
+  $(Device/elecom_wrc-gst)
+  DEVICE_MODEL := WRC-G01
+  DEVICE_DTS := mt7622-elecom-wrc-g01
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | \
+	append-ubi | check-size | \
+	elecom-wrc-gs-factory WRC-G01 0.00 -N | \
+	append-string MT7622_ELECOM_WRC-G01
+endef
+TARGET_DEVICES += elecom_wrc-g01
+
+define Device/elecom_wrc-gst
   DEVICE_VENDOR := ELECOM
-  DEVICE_MODEL := WRC-X3200GST3
-  DEVICE_DTS := mt7622-elecom-wrc-x3200gst3
   DEVICE_DTS_DIR := ../dts
   IMAGE_SIZE := 25600k
   KERNEL_SIZE := 6144k
@@ -205,12 +243,18 @@ define Device/elecom_wrc-x3200gst3
   PAGESIZE := 2048
   UBINIZE_OPTS := -E 5
   IMAGES += factory.bin
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  DEVICE_PACKAGES := kmod-mt7915-firmware
+endef
+
+define Device/elecom_wrc-x3200gst3
+  $(Device/elecom_wrc-gst)
+  DEVICE_MODEL := WRC-X3200GST3
+  DEVICE_DTS := mt7622-elecom-wrc-x3200gst3
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | \
 	append-ubi | check-size | \
 	elecom-wrc-gs-factory WRC-X3200GST3 0.00 -N | \
 	append-string MT7622_ELECOM_WRC-X3200GST3
-  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  DEVICE_PACKAGES := kmod-mt7915-firmware
 endef
 TARGET_DEVICES += elecom_wrc-x3200gst3
 
@@ -260,6 +304,9 @@ define Device/mediatek_mt7622-rfb1
   DEVICE_MODEL := MTK7622 rfb1 AP
   DEVICE_DTS := mt7622-rfb1
   DEVICE_PACKAGES := kmod-ata-ahci-mtk kmod-btmtkuart kmod-usb3
+  UBOOT_PATH := $(STAGING_DIR_IMAGE)/mt7622_rfb1-u-boot-mtk.bin
+  ARTIFACTS := u-boot.bin
+  ARTIFACT/u-boot.bin := append-uboot
 endef
 TARGET_DEVICES += mediatek_mt7622-rfb1
 
@@ -279,6 +326,9 @@ define Device/mediatek_mt7622-rfb1-ubi
   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | \
                 check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  UBOOT_PATH := $(STAGING_DIR_IMAGE)/mt7622_rfb1-u-boot-mtk.bin
+  ARTIFACTS := u-boot.bin
+  ARTIFACT/u-boot.bin := append-uboot
 endef
 TARGET_DEVICES += mediatek_mt7622-rfb1-ubi
 

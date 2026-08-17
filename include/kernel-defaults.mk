@@ -25,7 +25,6 @@ ifeq ($(strip $(CONFIG_EXTERNAL_KERNEL_TREE)),"")
     define Kernel/Prepare/Default
 	$(LINUX_CAT) $(DL_DIR)/$(LINUX_SOURCE) | $(TAR) -C $(KERNEL_BUILD_DIR) $(TAR_OPTIONS)
 	$(Kernel/Patch)
-	$(if $(QUILT),touch $(LINUX_DIR)/.quilt_used)
     endef
   else
     define Kernel/Prepare/Default
@@ -175,7 +174,6 @@ define Kernel/PrepareConfigPerRootfs
 		[ ! -d "$(1)" ] || rm -rf $(1); \
 		mkdir $(1) && $(CP) -T $(LINUX_DIR) $(1); \
 		touch $(1)/.config; \
-		rm -rf $(1)/usr/initramfs_data.cpio*; \
 	}
 endef
 
@@ -190,6 +188,7 @@ define Kernel/CompileImage/Initramfs
 		$(call Kernel/Configure/Initramfs,$(if $(1),$(1),$(TARGET_DIR)),$(LINUX_DIR)$(2)); \
 		$(CP) $(GENERIC_PLATFORM_DIR)/other-files/init $(if $(1),$(1),$(TARGET_DIR))/init; \
 		$(if $(SOURCE_DATE_EPOCH),touch -hcd "@$(SOURCE_DATE_EPOCH)" $(if $(1),$(1),$(TARGET_DIR)) $(if $(1),$(1),$(TARGET_DIR))/init;) \
+		rm -rf $(LINUX_DIR)$(2)/usr/initramfs_data.cpio*; \
 		$(if $(CONFIG_TARGET_ROOTFS_INITRAMFS_SEPARATE), \
 			$(call locked,{ \
 				$(if $(call qstrip,$(CONFIG_EXTERNAL_CPIO)), \
@@ -202,7 +201,7 @@ define Kernel/CompileImage/Initramfs
 				$(if $(CONFIG_TARGET_INITRAMFS_COMPRESSION_GZIP), \
 					$(STAGING_DIR_HOST)/bin/libdeflate-gzip -n -f -S .gzip -12 $(KERNEL_BUILD_DIR)/initrd$(2).cpio;) \
 				$(if $(CONFIG_TARGET_INITRAMFS_COMPRESSION_LZ4), \
-					$(STAGING_DIR_HOST)/bin/lz4c -l -c1 -fz --favor-decSpeed $(KERNEL_BUILD_DIR)/initrd$(2).cpio;) \
+					$(STAGING_DIR_HOST)/bin/lz4c -l -c1 -fz --favor-decSpeed $(KERNEL_BUILD_DIR)/initrd$(2).cpio $(KERNEL_BUILD_DIR)/initrd$(2).cpio.lz4;) \
 				$(if $(CONFIG_TARGET_INITRAMFS_COMPRESSION_LZMA), \
 					$(STAGING_DIR_HOST)/bin/lzma e -lc1 -lp2 -pb2 $(KERNEL_BUILD_DIR)/initrd$(2).cpio $(KERNEL_BUILD_DIR)/initrd$(2).cpio.lzma;) \
 				$(if $(CONFIG_TARGET_INITRAMFS_COMPRESSION_LZO), \

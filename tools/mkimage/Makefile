@@ -7,14 +7,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mkimage
-PKG_VERSION:=2024.07
+PKG_VERSION:=2026.07
 
 PKG_SOURCE:=u-boot-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:= \
 	https://mirror.cyberbits.eu/u-boot \
-	https://ftp.denx.de/pub/u-boot \
-	ftp://ftp.denx.de/pub/u-boot
-PKG_HASH:=f591da9ab90ef3d6b3d173766d0ddff90c4ed7330680897486117df390d83c8f
+	https://ftp.denx.de/pub/u-boot
+PKG_HASH:=78e8bfc382fe388f9b55aa1daf8c563522a037779b5d4c349d1415e381f1243e
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/u-boot-$(PKG_VERSION)
 
@@ -26,9 +25,13 @@ define Host/Configure
 		HOSTLDFLAGS="$(HOST_LDFLAGS)" \
 		PKG_CONFIG_EXTRAARGS="--static" \
 		V=$(if $(findstring c,$(OPENWRT_VERBOSE)),1) \
-		tools-only_config
+		tools-only_defconfig
 
-	sed -i 's/CONFIG_TOOLS_MKEFICAPSULE=y/# CONFIG_TOOLS_MKEFICAPSULE is not set/' $(HOST_BUILD_DIR)/.config
+	$(HOST_BUILD_DIR)/scripts/config \
+		--file $(HOST_BUILD_DIR)/.config \
+		--disable TOOLS_KWBIMAGE \
+		--disable TOOLS_LIBCRYPTO \
+		--disable TOOLS_MKEFICAPSULE
 endef
 
 define Host/Compile

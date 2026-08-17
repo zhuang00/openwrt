@@ -19,6 +19,14 @@ define Build/meraki-header
         @mv $@.new $@
 endef
 
+define Build/meraki-old-nand
+	-$(STAGING_DIR_HOST)/bin/mkmerakifw-old \
+		-B $(1) -s \
+		-i $@ \
+		-o $@.new
+	@mv $@.new $@
+endef
+
 # attention: only zlib compression is allowed for the boot fs
 define Build/zyxel-buildkerneljffs
 	mkdir -p $@.tmp/boot
@@ -313,14 +321,32 @@ define Device/meraki_mr18
   BLOCKSIZE := 128k
   PAGESIZE := 2048
   LOADER_TYPE := bin
+  LZMA_TEXT_START := 0x82800000
   KERNEL := kernel-bin | append-dtb | lzma | loader-kernel | meraki-header MR18
-# Initramfs-build fails due to size issues
-# KERNEL_INITRAMFS := $$(KERNEL)
-  KERNEL_INITRAMFS :=
+  KERNEL_INITRAMFS := $$(KERNEL)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   SUPPORTED_DEVICES += mr18
 endef
 TARGET_DEVICES += meraki_mr18
+
+define Device/meraki_z1
+  SOC = ar9344
+  DEVICE_VENDOR := Meraki
+  DEVICE_MODEL := Z1
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-ledtrig-usbport kmod-owl-loader \
+	kmod-leds-uleds kmod-spi-gpio nu801 -uboot-envtools
+  KERNEL_SIZE := 8064k
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  LOADER_TYPE := bin
+  LZMA_TEXT_START := 0x82800000
+  KERNEL := kernel-bin | append-dtb | lzma | loader-kernel | \
+	    pad-to $$(BLOCKSIZE) | meraki-old-nand z1
+  KERNEL_INITRAMFS := $$(KERNEL)
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  SUPPORTED_DEVICES += z1
+endef
+TARGET_DEVICES += meraki_z1
 
 # fake rootfs is mandatory, pad-offset 129 equals (2 * uimage_header + '\0')
 define Device/netgear_ath79_nand
@@ -442,6 +468,10 @@ define Device/zte_mf28x_common
   DEVICE_PACKAGES := kmod-usb2 kmod-ath10k-ct
   BLOCKSIZE := 128k
   PAGESIZE := 2048
+  LOADER_TYPE := bin
+  LZMA_TEXT_START := 0x82800000
+  KERNEL := kernel-bin | append-dtb | lzma | loader-kernel | uImage none
+  KERNEL_INITRAMFS := $$(KERNEL)
   KERNEL_SIZE := 4096k
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
@@ -455,6 +485,7 @@ define Device/zte_mf281
   IMAGE/factory.bin := append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi | \
 	check-size
   DEVICE_PACKAGES += ath10k-firmware-qca9888-ct kmod-usb-net-rndis \
+	-ath10k-board-qca9888 ipq-wifi-zte_mf286c \
 	kmod-usb-acm comgt-ncm
 endef
 TARGET_DEVICES += zte_mf281
@@ -471,6 +502,7 @@ define Device/zte_mf286
   $(Device/zte_mf28x_common)
   DEVICE_MODEL := MF286
   DEVICE_PACKAGES += ath10k-firmware-qca988x-ct ath10k-firmware-qca9888-ct \
+	-ath10k-board-qca9888 ipq-wifi-zte_mf286ar \
 	kmod-usb-net-qmi-wwan kmod-usb-serial-option uqmi
 endef
 TARGET_DEVICES += zte_mf286
@@ -479,9 +511,19 @@ define Device/zte_mf286a
   $(Device/zte_mf28x_common)
   DEVICE_MODEL := MF286A
   DEVICE_PACKAGES += ath10k-firmware-qca9888-ct kmod-usb-net-qmi-wwan \
+	-ath10k-board-qca9888 ipq-wifi-zte_mf286ar \
 	kmod-usb-serial-option uqmi
 endef
 TARGET_DEVICES += zte_mf286a
+
+define Device/zte_mf286c
+  $(Device/zte_mf28x_common)
+  DEVICE_MODEL := MF286C
+  DEVICE_PACKAGES += ath10k-firmware-qca9888-ct kmod-usb-net-qmi-wwan \
+	-ath10k-board-qca9888 ipq-wifi-zte_mf286c \
+	kmod-usb-serial-option uqmi
+endef
+TARGET_DEVICES += zte_mf286c
 
 define Device/zte_mf286r
   $(Device/zte_mf28x_common)

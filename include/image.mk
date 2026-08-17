@@ -41,6 +41,9 @@ KDIR=$(KERNEL_BUILD_DIR)
 KDIR_TMP=$(KDIR)/tmp
 DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
 
+ifeq ($(EXTRA_IMAGE_NAME),)
+EXTRA_IMAGE_NAME:=$(call qstrip,$(CONFIG_EXTRA_IMAGE_NAME))
+endif
 IMG_PREFIX_EXTRA:=$(if $(EXTRA_IMAGE_NAME),$(call sanitize,$(EXTRA_IMAGE_NAME))-)
 IMG_PREFIX_VERNUM:=$(if $(CONFIG_VERSION_FILENAMES),$(call sanitize,$(VERSION_NUMBER))-)
 IMG_PREFIX_VERCODE:=$(if $(CONFIG_VERSION_CODE_FILENAMES),$(call sanitize,$(VERSION_CODE))-)
@@ -86,10 +89,12 @@ SQUASHFS_BLOCKSIZE := $(CONFIG_TARGET_SQUASHFS_BLOCK_SIZE)k
 SQUASHFSOPT := -b $(SQUASHFS_BLOCKSIZE)
 SQUASHFSOPT += -p '/dev d 755 0 0' -p '/dev/console c 600 0 0 5 1'
 SQUASHFSOPT += $(if $(CONFIG_SELINUX),-xattrs,-no-xattrs)
+SQUASHFSOPT += -block-readers $(CONFIG_TARGET_SQUASHFS_BLOCK_READERS)
+SQUASHFSOPT += -small-readers $(CONFIG_TARGET_SQUASHFS_SMALL_READERS)
 SQUASHFSCOMP := gzip
 LZMA_XZ_OPTIONS := -Xpreset 9 -Xe -Xlc 0 -Xlp 2 -Xpb 2
 ifeq ($(CONFIG_SQUASHFS_XZ),y)
-  ifneq ($(filter arm x86 powerpc sparc,$(LINUX_KARCH)),)
+  ifneq ($(filter arm x86 powerpc,$(LINUX_KARCH)),)
     BCJ_FILTER:=-Xbcj $(LINUX_KARCH)
   endif
   SQUASHFSCOMP := xz $(LZMA_XZ_OPTIONS) $(BCJ_FILTER)
@@ -97,14 +102,29 @@ endif
 
 JFFS2_BLOCKSIZE ?= 64k 128k
 
+EROFS_PCLUSTERSIZE = $(shell echo $$(($(CONFIG_TARGET_EROFS_PCLUSTER_SIZE)*1024)))
+EROFSOPT := -Efragments,dedupe,ztailpacking -Uclear --all-root
+EROFSOPT += $(if $(SOURCE_DATE_EPOCH),-T$(SOURCE_DATE_EPOCH) --ignore-mtime)
+EROFSOPT += $(if $(CONFIG_SELINUX),,-x-1)
+EROFSCOMP := lz4hc,12
+ifeq ($(CONFIG_EROFS_FS_ZIP_LZMA),y)
+EROFSCOMP := lzma,109
+endif
+
 fs-types-$(CONFIG_TARGET_ROOTFS_SQUASHFS) += squashfs
 fs-types-$(CONFIG_TARGET_ROOTFS_JFFS2) += $(addprefix jffs2-,$(JFFS2_BLOCKSIZE))
 fs-types-$(CONFIG_TARGET_ROOTFS_JFFS2_NAND) += $(addprefix jffs2-nand-,$(NAND_BLOCKSIZE))
 fs-types-$(CONFIG_TARGET_ROOTFS_EXT4FS) += ext4
 fs-types-$(CONFIG_TARGET_ROOTFS_UBIFS) += ubifs
+fs-types-$(CONFIG_TARGET_ROOTFS_EROFS) += erofs
+fs-types-$(CONFIG_TARGET_ROOTFS_TARGZ) += targz
 fs-subtypes-$(CONFIG_TARGET_ROOTFS_JFFS2) += $(addsuffix -raw,$(addprefix jffs2-,$(JFFS2_BLOCKSIZE)))
 
 TARGET_FILESYSTEMS := $(fs-types-y)
+
+ifneq ($(ROOTFS_FILESYSTEM),)
+TARGET_FILESYSTEMS := $(filter $(ROOTFS_FILESYSTEM) $(ROOTFS_FILESYSTEM)-%,$(TARGET_FILESYSTEMS))
+endif
 
 FS_64K := $(filter-out jffs2-%,$(TARGET_FILESYSTEMS)) jffs2-64k
 FS_128K := $(filter-out jffs2-%,$(TARGET_FILESYSTEMS)) jffs2-128k
@@ -307,6 +327,19 @@ define Image/mkfs/ext4
 		$@ $(call mkfs_target_dir,$(1))/
 endef
 
+# Don't use the mkfs.erofs builtin $SOURCE_DATE_EPOCH behavior
+define Image/mkfs/erofs
+	env -u SOURCE_DATE_EPOCH $(STAGING_DIR_HOST)/bin/mkfs.erofs -z$(EROFSCOMP) \
+		-C$(EROFS_PCLUSTERSIZE) $(EROFSOPT) \
+		$@ $(call mkfs_target_dir,$(1))
+endef
+
+define Image/mkfs/targz
+	$(TAR) -cp --numeric-owner --owner=0 --group=0 --mode=a-s --sort=name \
+		$(if $(SOURCE_DATE_EPOCH),--mtime="@$(SOURCE_DATE_EPOCH)") \
+		-C $(call mkfs_target_dir,$(1)) . | gzip -9n > $@
+endef
+
 define Image/Manifest
 	$(if $(CONFIG_USE_APK), \
 		$(call apk,$(TARGET_DIR_ORIG)) list --quiet --manifest --no-network \
@@ -340,6 +373,7 @@ define Image/gzip-ext4-padded-squashfs
 
 endef
 
+ifeq ($(filter-out targz,$(ROOTFS_FILESYSTEM)),)
 ifdef CONFIG_TARGET_ROOTFS_TARGZ
   define Image/Build/targz
 	$(TAR) -cp --numeric-owner --owner=0 --group=0 --mode=a-s --sort=name \
@@ -347,11 +381,14 @@ ifdef CONFIG_TARGET_ROOTFS_TARGZ
 		-C $(TARGET_DIR)/ . | gzip -9n > $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz
   endef
 endif
+endif
 
+ifeq ($(filter-out cpiogz,$(ROOTFS_FILESYSTEM)),)
 ifdef CONFIG_TARGET_ROOTFS_CPIOGZ
   define Image/Build/cpiogz
 	( cd $(TARGET_DIR); find . | $(STAGING_DIR_HOST)/bin/cpio -o -H newc -R 0:0 | gzip -9n >$(BIN_DIR)/$(IMG_ROOTFS).cpio.gz )
   endef
+endif
 endif
 
 mkfs_packages = $(filter-out @%,$(PACKAGES_$(call param_get,pkg,pkg=$(target_params))))
@@ -567,7 +604,15 @@ endef
 
 define Device/Check/Common
   _PROFILE_SET = $$(strip $$(foreach profile,$$(PROFILES) DEVICE_$(1),$$(call DEVICE_CHECK_PROFILE,$$(profile))))
-  DEVICE_PACKAGES += $$(call extra_packages,$$(DEVICE_PACKAGES))
+  # Check if device is disabled and if so do not mark to be installed when ImageBuilder is used
+  ifeq ($(IB),1)
+    ifeq ($$(DEFAULT),n)
+      _PROFILE_SET :=
+    endif
+    ifeq ($$(BROKEN),y)
+      _PROFILE_SET :=
+    endif
+  endif
   ifdef TARGET_PER_DEVICE_ROOTFS
     $$(eval $$(call merge_packages,_PACKAGES,$$(DEVICE_PACKAGES) $$(call DEVICE_EXTRA_PACKAGES,$(1))))
     ROOTFS_ID/$(1) := $$(if $$(_PROFILE_SET),$$(call mkfs_packages_id,$$(_PACKAGES)))
@@ -647,6 +692,8 @@ define Device/Build/initramfs
 	VERSION_NUMBER="$(VERSION_NUMBER)" \
 	VERSION_CODE="$(VERSION_CODE)" \
 	SUPPORTED_DEVICES="$$(SUPPORTED_DEVICES)" \
+	KERNEL_SIZE="$$(KERNEL_SIZE)" \
+	IMAGE_SIZE="$$(IMAGE_SIZE)" \
 	$(TOPDIR)/scripts/json_add_image_info.py $$@
 endef
 endif
@@ -781,6 +828,8 @@ define Device/Build/image
 	VERSION_NUMBER="$(VERSION_NUMBER)" \
 	VERSION_CODE="$(VERSION_CODE)" \
 	SUPPORTED_DEVICES="$(SUPPORTED_DEVICES)" \
+	KERNEL_SIZE="$(KERNEL_SIZE)" \
+	IMAGE_SIZE="$(IMAGE_SIZE)" \
 	$(TOPDIR)/scripts/json_add_image_info.py $$@
 
 endef
@@ -835,6 +884,8 @@ define Device/Build/artifact
 	VERSION_NUMBER="$(VERSION_NUMBER)" \
 	VERSION_CODE="$(VERSION_CODE)" \
 	SUPPORTED_DEVICES="$(SUPPORTED_DEVICES)" \
+	KERNEL_SIZE="$(KERNEL_SIZE)" \
+	IMAGE_SIZE="$(IMAGE_SIZE)" \
 	$(TOPDIR)/scripts/json_add_image_info.py $$@
 
 endef
@@ -847,8 +898,12 @@ define Device/Build
     $$(call Device/Build/compile,$$(compile),$(1))))
 
   $$(eval $$(foreach image,$$(IMAGES), \
-    $$(foreach fs,$$(filter $(TARGET_FILESYSTEMS),$$(FILESYSTEMS)), \
+    $$(foreach fs,$$(filter $$(filter-out targz,$(TARGET_FILESYSTEMS)),$$(FILESYSTEMS)), \
       $$(call Device/Build/image,$$(fs),$$(image),$(1)))))
+
+  $(if $(CONFIG_TARGET_ROOTFS_TARGZ), \
+    IMAGE/rootfs.tar.gz := append-rootfs
+    $$(eval $$(call Device/Build/image,targz,rootfs.tar.gz,$(1))))
 
   $$(eval $$(foreach artifact,$$(ARTIFACTS), \
     $$(call Device/Build/artifact,$$(artifact),$(1))))
